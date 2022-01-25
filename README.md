@@ -16,5 +16,11 @@ Remember, the script uses credentials so you should be careful with where you st
 
 ### HowToRunScript
 You can run the script in two ways, depending on the parameters you are passing to it:
-- For an Incremental load, run the script with parameter (this will load all messages since the last execution): *.\DownloadDataFromSIVIapi.ps1 incremental*
-- For an Full Load load, run the script with parameter (this will load all messages which api has): *.\DownloadDataFromSIVIapi.ps1 fullload*
+- For an Full Load load, run the script with parameter **fullload**. This will load all messages which api has 
+  ```
+  powershell.exe .\DownloadDataFromSIVIapi.ps1 fullload
+  ```
+- For an Incremental load, run the script with parameter **incremental**. This will load all messages since the last execution
+  ```
+  powershell.exe .\DownloadDataFromSIVIapi.ps1 incremental
+  ```
