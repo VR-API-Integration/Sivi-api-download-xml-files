@@ -57,7 +57,6 @@ Function Get-SIVIMessageZip {
 		'Content-Type'='application/xml'
 		'Accept'='application/xml'
 		'Authorization'= $AccessToken
-		'X-Client-Id'= $ConsumerKey
 		'X-Raet-Tenant-Id'= $TenantId
 	}
 	
