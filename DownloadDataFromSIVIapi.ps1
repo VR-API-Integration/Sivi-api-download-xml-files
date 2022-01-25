@@ -25,7 +25,7 @@ if(-not(Test-Path -Path ./Credentials/Credentials.xml -PathType Leaf))
 }
 
 # API Configuration
-$TenantId = "4028868"
+$TenantId = "sandbox"
 
 Get-SIVIMessageZip -TypeExecution $Run -TenantId $TenantId
 
