@@ -12,6 +12,7 @@ Before getting the information from the API, you need to follow these steps to s
 1. Create credentials file with using this script: *.\CreateCredentialsFile.ps1*
 2. Open script file *DownloadDataFromSIVIapi.ps1* and edit line 28 with the tenant ID value.
 3. In case your server has security check for scripts in place and will throw error that scripts are not signed then please unblock all scripts with this command *Unblock-File NameOfScriptFile.ps1*
+
 Remember, the script uses credentials so you should be careful with where you store these files and with whom you share this information.
 
 ### HowToRunScript
