@@ -92,7 +92,7 @@ Function WriteXMLFile {
 	
 	for ($i = 1; $i -lt $nodeArray.Count ; $i++)
 	{
-		$elementNumber = ([int]$NextPage-1) * 100 + $i
+		$elementNumber = [int]$NextPage * 100 + $i
 	
 		$pathXMLFile = Join-Path $SIVIMessagesPath "siviMessages_$(get-date -f yyyyMMddTHHmm)_$elementNumber.xml"
 		$Stream = [System.IO.StreamWriter]::new($pathXMLFile , $false)

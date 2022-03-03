@@ -51,7 +51,7 @@ Function Get-SIVIMessageZip {
 	$SIVIAPIUri = 'https://api.raet.com/sivi'
 	$nextPage = "/verzuimmeldingen" + $UriFilter
 	$thereIsData = $false
-	$numPage = 1
+	$numPage = 0
 
 	# Retrieve the data from the API
 	DO
