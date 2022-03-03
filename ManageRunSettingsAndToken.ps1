@@ -48,12 +48,12 @@ Function Get-RunSettingStoragePath {
 Function Get-AuthenticationToken {
 	[CmdletBinding()]
     param(
-	[Parameter(Mandatory)]
-	[string]$ClientId,
-	[Parameter(Mandatory)]
-	[string]$ClientSecret,
-	[Parameter(Mandatory)]
-	[string]$IdentityAddress
+		[Parameter(Mandatory)]
+		[string]$ClientId,
+		[Parameter(Mandatory)]
+		[string]$ClientSecret,
+		[Parameter(Mandatory)]
+		[string]$IdentityAddress
 	) 
 		
 	Write-Host 'Retrieving token for Client Id: ' -ForegroundColor Green -NoNewline
@@ -76,6 +76,35 @@ Function Get-AuthenticationToken {
 	$Token = $Content.token_type + ' ' + $Content.access_token
 	
 	return $Token
+}
+
+Function WriteXMLFile {
+	
+	[CmdletBinding()]
+	Param(
+		[Parameter(Mandatory = $true)]
+		[string]$NextContent,
+		[Parameter(Mandatory)]
+		[string]$NextPage
+	)
+	
+	$nodeArray = $NextContent -split '(?=<Verzuimmeldingen)'
+	
+	for ($i = 1; $i -lt $nodeArray.Count ; $i++)
+	{
+		$elementNumber = [int]$NextPage * 100 + $i
+	
+		$pathXMLFile = Join-Path $SIVIMessagesPath "siviMessages_$(get-date -f yyyyMMddTHHmm)_$elementNumber.xml"
+		$Stream = [System.IO.StreamWriter]::new($pathXMLFile , $false)
+		
+		try {
+			$Stream.Write('<?xml version="1.0" encoding="utf-8"?>')
+			$Stream.Write($nodeArray[$i])
+		}
+		finally {
+			$Stream.Dispose()
+		}
+	}
 }
 
 
