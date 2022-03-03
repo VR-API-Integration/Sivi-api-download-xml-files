@@ -18,17 +18,6 @@ Function Get-SIVIMessageZip {
 		New-Item -ItemType Directory -Force -Path $SIVIMessagesPath
 	}
 	
-	$pathXMLFile = Join-Path $SIVIMessagesPath 'siviMessages.xml'
-	$Stream = [System.IO.StreamWriter]::new($pathXMLFile , $false)
-
-	try {
-		$Stream.Write('<?xml version="1.0" encoding="utf-8"?>')
-		$Stream.Write($Content)
-	}
-	finally {
-    	$Stream.Dispose()
-	}	
-	
     # Get Token
     $IdentityAddress = 'https://api.raet.com/authentication/token'
     $Credential = Import-CliXml -Path  ./Credentials/Credentials.xml
@@ -36,18 +25,17 @@ Function Get-SIVIMessageZip {
     $ClientSecret = $Credential.GetNetworkCredential().Password
 	$AccessToken = Get-AuthenticationToken -IdentityAddress $IdentityAddress -ClientId $ConsumerKey -ClientSecret $ClientSecret
 	
-	# Set the filters if the type of execution is incremental		
+	# Set the filters and headers for the calls to the API
+	$RunSetting = Get-SIVIRunSetting
+	$ChangedAfter = $RunSetting.FetchedUntil
+	$ChangedUntil = (Get-Date).ToUniversalTime()
 	if ($TypeExecution -eq "incremental")
 	{
-		$RunSetting = Get-SIVIRunSetting
-		$ChangedAfter = $RunSetting.FetchedUntil
-		$ChangedUntil = (Get-Date).ToUniversalTime()
 		$ChangedAfterQueryString = Get-Date -Date $ChangedAfter -Format 'yyyy-MM-ddTHH:mm:ss.fff'
 		$ChangedUntilQueryString = Get-Date -Date $ChangedUntil -Format 'yyyy-MM-ddTHH:mm:ss.fff'
 		$UriFilter = "?changedAfter=${ChangedAfterQueryString}&changedUntil=${ChangedUntilQueryString}"
 	}
 	
-	# Retrieve the data from the API
 	Write-Host 'Retrieving messages from tenant: ' -ForegroundColor Green -NoNewline
 	Write-Host $TenantId -ForegroundColor White
 	Write-host "`n"
@@ -63,7 +51,9 @@ Function Get-SIVIMessageZip {
 	$SIVIAPIUri = 'https://api.raet.com/sivi'
 	$nextPage = "/verzuimmeldingen" + $UriFilter
 	$thereIsData = $false
+	$numPage = 1
 
+	# Retrieve the data from the API
 	DO
 	{
 		$NextUri = $SIVIAPIUri + $nextPage
@@ -90,37 +80,40 @@ Function Get-SIVIMessageZip {
 		{
 			$nextContent = Select-Xml -Content $nextResponse.Content -XPath '/Messages/Value'
 			$nextPage = Select-Xml -Content $nextResponse.Content -XPath '/Messages/NextLink'
+			
+			if ($nextContent)
+			{
+				WriteXMLFile -NextContent $nextContent -NextPage $numPage
+			}
 			if ($nextPage)
 			{
 				$nextPage = $nextPage.ToString().replace('amp;','')
 			}
 			
-			$Stream = [System.IO.StreamWriter]::new($pathXMLFile , $true)
-			try {
-				$Stream.Write($nextContent)
-			}
-			finally {
-				$Stream.Dispose()
-			}
-			
 			$thereIsData = $true
+			$numPage++
 		}		
 	} While ($nextPage)
-			
-	if ($TypeExecution -eq "incremental")
-	{   
-		$RunSetting.FetchedUntil = $ChangedUntil
-		Edit-SIVIRunSetting -RunSetting $RunSetting
-	} 
+
 
 	if ($thereIsData)
 	{
+		# Update the last time the api was consumed
+		$RunSetting.FetchedUntil = $ChangedUntil
+		Edit-SIVIRunSetting -RunSetting $RunSetting
+		
+		# Zip a whole folder with temporal xml files
 		Write-host "`n"
 		Write-Host 'Creating zip archive with messages' -ForegroundColor Green
+		$FilesInPutPath = Join-Path $SIVIMessagesPath "siviMessages_*.xml"
 		$zipOutPutPath = Join-Path $SIVIMessagesPath "siviMessages_$(get-date -f yyyyMMddTHHmmss).zip"
-		Compress-Archive -Path $pathXMLFile -DestinationPath $zipOutPutPath
+		Compress-Archive -Path $FilesInPutPath -DestinationPath $zipOutPutPath
+	
+		# Remove all temporal xml files
+		Write-host "`n"
+		Write-Host 'Removing temporal xml files' -ForegroundColor Green
+		Remove-Item $FilesInPutPath
 	}
-	Remove-Item $pathXMLFile
 	
 	Write-host "`n"
 	Write-Host 'Script successfully finished' -ForegroundColor Green
